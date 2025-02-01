@@ -70,7 +70,14 @@ impl Parse for Expr {
     fn parse(input: ParseStream) -> Result<Self> {
         let lookahead = input.lookahead1();
         if lookahead.peek(LitStr) {
-            input.parse().map(Expr::Lit)
+            let lit: LitStr = input.parse()?;
+            if !lit.suffix().is_empty() {
+                return Err(Error::new(
+                    lit.span(),
+                    "unexpected suffix on string literal",
+                ));
+            }
+            Ok(Expr::Lit(lit))
         } else if lookahead.peek(kw::concat) {
             input.parse().map(Expr::Concat)
         } else if lookahead.peek(kw::env) {
