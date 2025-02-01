@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::parse::{Error, Parse, ParseStream, Result};
+use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Result};
 use syn::punctuated::Punctuated;
 use syn::token::{Brace, Bracket, Paren};
 use syn::{braced, bracketed, parenthesized, LitStr, Token};
@@ -109,17 +109,25 @@ impl ToTokens for Expr {
 
 macro_rules! macro_delimiter {
     ($var:ident in $input:ident) => {{
-        let lookahead = $input.lookahead1();
-        if $input.peek(Paren) {
-            MacroDelimiter::Paren(parenthesized!($var in $input))
-        } else if $input.peek(Brace) {
-            MacroDelimiter::Brace(braced!($var in $input))
-        } else if $input.peek(Bracket) {
-            MacroDelimiter::Bracket(bracketed!($var in $input))
-        } else {
-            return Err(lookahead.error());
-        }
+        let (delim, content) = $input.call(macro_delimiter)?;
+        $var = content;
+        delim
     }};
+}
+
+fn macro_delimiter<'a>(input: ParseStream<'a>) -> Result<(MacroDelimiter, ParseBuffer<'a>)> {
+    let content;
+    let lookahead = input.lookahead1();
+    let delim = if input.peek(Paren) {
+        MacroDelimiter::Paren(parenthesized!(content in input))
+    } else if input.peek(Brace) {
+        MacroDelimiter::Brace(braced!(content in input))
+    } else if input.peek(Bracket) {
+        MacroDelimiter::Bracket(bracketed!(content in input))
+    } else {
+        return Err(lookahead.error());
+    };
+    Ok((delim, content))
 }
 
 impl MacroDelimiter {
