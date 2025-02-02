@@ -1,7 +1,13 @@
 [package]
 name = "macro-string"
 version = "0.0.0"
+authors = ["David Tolnay <dtolnay@gmail.com>"]
+categories = ["development-tools::procedural-macro-helpers"]
+description = "Eager evaluation of macros like `concat!` and `env!`"
+documentation = "https://docs.rs/macro-string"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/dtolnay/macro-string"
 rust-version = "1.61"
 
 [dependencies]
