@@ -1,3 +1,11 @@
+//! [![github]](https://github.com/dtolnay/macro-string)&ensp;[![crates-io]](https://crates.io/crates/macro-string)&ensp;[![docs-rs]](https://docs.rs/macro-string)
+//!
+//! [github]: https://img.shields.io/badge/github-8da0cb?style=for-the-badge&labelColor=555555&logo=github
+//! [crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&labelColor=555555&logo=rust
+//! [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
+//!
+//! <br>
+//!
 //! This crate is a helper library for procedural macros to perform eager
 //! evaluation of standard library string macros like `concat!` and `env!` in
 //! macro input.
