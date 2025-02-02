@@ -16,3 +16,4 @@ syn = { version = "2", default-features = false, features = ["parsing", "proc-ma
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
+rustdoc-args = ["--generate-link-to-definition"]
