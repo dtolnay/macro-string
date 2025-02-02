@@ -1,4 +1,5 @@
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::parse::{Error, Parse, ParseStream, Result};
 use syn::punctuated::Punctuated;
 use syn::token::{Brace, Bracket, Paren};
@@ -86,6 +87,19 @@ impl Parse for Expr {
     }
 }
 
+impl ToTokens for Expr {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Expr::Lit(expr) => expr.to_tokens(tokens),
+            Expr::Concat(expr) => expr.to_tokens(tokens),
+            Expr::Env(expr) => expr.to_tokens(tokens),
+            Expr::Include(expr) => expr.to_tokens(tokens),
+            Expr::IncludeStr(expr) => expr.to_tokens(tokens),
+            Expr::Stringify(expr) => expr.to_tokens(tokens),
+        }
+    }
+}
+
 macro_rules! macro_delimiter {
     ($var:ident in $input:ident) => {{
         let lookahead = $input.lookahead1();
@@ -101,6 +115,19 @@ macro_rules! macro_delimiter {
     }};
 }
 
+impl MacroDelimiter {
+    fn surround<F>(&self, tokens: &mut TokenStream, f: F)
+    where
+        F: FnOnce(&mut TokenStream),
+    {
+        match self {
+            MacroDelimiter::Paren(delimiter) => delimiter.surround(tokens, f),
+            MacroDelimiter::Brace(delimiter) => delimiter.surround(tokens, f),
+            MacroDelimiter::Bracket(delimiter) => delimiter.surround(tokens, f),
+        }
+    }
+}
+
 impl Parse for Concat {
     fn parse(input: ParseStream) -> Result<Self> {
         let content;
@@ -110,6 +137,15 @@ impl Parse for Concat {
             delimiter: macro_delimiter!(content in input),
             args: content.call(Punctuated::parse_terminated)?,
         })
+    }
+}
+
+impl ToTokens for Concat {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.name.to_tokens(tokens);
+        self.bang_token.to_tokens(tokens);
+        self.delimiter
+            .surround(tokens, |tokens| self.args.to_tokens(tokens));
     }
 }
 
@@ -126,6 +162,17 @@ impl Parse for Env {
     }
 }
 
+impl ToTokens for Env {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.name.to_tokens(tokens);
+        self.bang_token.to_tokens(tokens);
+        self.delimiter.surround(tokens, |tokens| {
+            self.arg.to_tokens(tokens);
+            self.trailing_comma.to_tokens(tokens);
+        });
+    }
+}
+
 impl Parse for Include {
     fn parse(input: ParseStream) -> Result<Self> {
         let content;
@@ -136,6 +183,17 @@ impl Parse for Include {
             arg: content.parse()?,
             trailing_comma: content.parse()?,
         })
+    }
+}
+
+impl ToTokens for Include {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.name.to_tokens(tokens);
+        self.bang_token.to_tokens(tokens);
+        self.delimiter.surround(tokens, |tokens| {
+            self.arg.to_tokens(tokens);
+            self.trailing_comma.to_tokens(tokens);
+        });
     }
 }
 
@@ -152,6 +210,17 @@ impl Parse for IncludeStr {
     }
 }
 
+impl ToTokens for IncludeStr {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.name.to_tokens(tokens);
+        self.bang_token.to_tokens(tokens);
+        self.delimiter.surround(tokens, |tokens| {
+            self.arg.to_tokens(tokens);
+            self.trailing_comma.to_tokens(tokens);
+        });
+    }
+}
+
 impl Parse for Stringify {
     fn parse(input: ParseStream) -> Result<Self> {
         let content;
@@ -161,5 +230,14 @@ impl Parse for Stringify {
             delimiter: macro_delimiter!(content in input),
             tokens: content.parse()?,
         })
+    }
+}
+
+impl ToTokens for Stringify {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.name.to_tokens(tokens);
+        self.bang_token.to_tokens(tokens);
+        self.delimiter
+            .surround(tokens, |tokens| self.tokens.to_tokens(tokens));
     }
 }
