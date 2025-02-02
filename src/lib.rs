@@ -219,7 +219,7 @@ macro_rules! macro_delimiter {
     }};
 }
 
-fn macro_delimiter<'a>(input: ParseStream<'a>) -> Result<(MacroDelimiter, ParseBuffer<'a>)> {
+fn macro_delimiter(input: ParseStream) -> Result<(MacroDelimiter, ParseBuffer)> {
     let content;
     let lookahead = input.lookahead1();
     let delim = if input.peek(Paren) {
