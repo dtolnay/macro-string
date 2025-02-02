@@ -65,10 +65,12 @@ use quote::{quote, ToTokens};
 use std::env;
 use std::fs;
 use std::path::Path;
-use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Result};
+use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Parser, Result};
 use syn::punctuated::Punctuated;
 use syn::token::{Brace, Bracket, Paren};
-use syn::{braced, bracketed, parenthesized, Ident, LitStr, Token};
+use syn::{
+    braced, bracketed, parenthesized, Ident, LitBool, LitChar, LitFloat, LitInt, LitStr, Token,
+};
 
 mod kw {
     syn::custom_keyword!(concat);
@@ -82,14 +84,18 @@ pub struct MacroString(pub String);
 
 impl Parse for MacroString {
     fn parse(input: ParseStream) -> Result<Self> {
-        let expr: Expr = input.parse()?;
+        let expr = input.call(Expr::parse_strict)?;
         let value = expr.eval()?;
         Ok(MacroString(value))
     }
 }
 
 enum Expr {
-    Lit(LitStr),
+    LitStr(LitStr),
+    LitChar(LitChar),
+    LitInt(LitInt),
+    LitFloat(LitFloat),
+    LitBool(LitBool),
     Concat(Concat),
     Env(Env),
     Include(Include),
@@ -100,7 +106,11 @@ enum Expr {
 impl Expr {
     fn eval(&self) -> Result<String> {
         match self {
-            Expr::Lit(lit) => Ok(lit.value()),
+            Expr::LitStr(lit) => Ok(lit.value()),
+            Expr::LitChar(lit) => Ok(lit.value().to_string()),
+            Expr::LitInt(lit) => Ok(lit.base10_digits().to_owned()),
+            Expr::LitFloat(lit) => Ok(lit.base10_digits().to_owned()),
+            Expr::LitBool(lit) => Ok(lit.value.to_string()),
             Expr::Concat(expr) => {
                 let mut concat = String::new();
                 for arg in &expr.args {
@@ -118,7 +128,7 @@ impl Expr {
             Expr::Include(expr) => {
                 let path = expr.arg.eval()?;
                 let content = fs_read(&expr, &path)?;
-                let inner: Expr = syn::parse_str(&content)?;
+                let inner = Expr::parse_strict.parse_str(&content)?;
                 inner.eval()
             }
             Expr::IncludeStr(expr) => {
@@ -192,8 +202,16 @@ enum MacroDelimiter {
     Bracket(Bracket),
 }
 
-impl Parse for Expr {
-    fn parse(input: ParseStream) -> Result<Self> {
+impl Expr {
+    fn parse_strict(input: ParseStream) -> Result<Self> {
+        Self::parse(input, false)
+    }
+
+    fn parse_any(input: ParseStream) -> Result<Self> {
+        Self::parse(input, true)
+    }
+
+    fn parse(input: ParseStream, allow_nonstring_literals: bool) -> Result<Self> {
         let lookahead = input.lookahead1();
         if lookahead.peek(LitStr) {
             let lit: LitStr = input.parse()?;
@@ -203,7 +221,35 @@ impl Parse for Expr {
                     "unexpected suffix on string literal",
                 ));
             }
-            Ok(Expr::Lit(lit))
+            Ok(Expr::LitStr(lit))
+        } else if allow_nonstring_literals && input.peek(LitChar) {
+            let lit: LitChar = input.parse()?;
+            if !lit.suffix().is_empty() {
+                return Err(Error::new(lit.span(), "unexpected suffix on char literal"));
+            }
+            Ok(Expr::LitChar(lit))
+        } else if allow_nonstring_literals && input.peek(LitInt) {
+            let lit: LitInt = input.parse()?;
+            match lit.suffix() {
+                "" | "i8" | "i16" | "i32" | "i64" | "i128" | "u8" | "u16" | "u32" | "u64"
+                | "u128" | "f16" | "f32" | "f64" | "f128" => {}
+                _ => {
+                    return Err(Error::new(
+                        lit.span(),
+                        "unexpected suffix on integer literal",
+                    ));
+                }
+            }
+            Ok(Expr::LitInt(lit))
+        } else if allow_nonstring_literals && input.peek(LitFloat) {
+            let lit: LitFloat = input.parse()?;
+            match lit.suffix() {
+                "" | "f16" | "f32" | "f64" | "f128" => {}
+                _ => return Err(Error::new(lit.span(), "unexpected suffix on float literal")),
+            }
+            Ok(Expr::LitFloat(lit))
+        } else if allow_nonstring_literals && input.peek(LitBool) {
+            input.parse().map(Expr::LitBool)
         } else if lookahead.peek(kw::concat) {
             input.parse().map(Expr::Concat)
         } else if lookahead.peek(kw::env) {
@@ -231,7 +277,11 @@ impl Parse for Expr {
 impl ToTokens for Expr {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            Expr::Lit(expr) => expr.to_tokens(tokens),
+            Expr::LitStr(expr) => expr.to_tokens(tokens),
+            Expr::LitChar(expr) => expr.to_tokens(tokens),
+            Expr::LitInt(expr) => expr.to_tokens(tokens),
+            Expr::LitFloat(expr) => expr.to_tokens(tokens),
+            Expr::LitBool(expr) => expr.to_tokens(tokens),
             Expr::Concat(expr) => expr.to_tokens(tokens),
             Expr::Env(expr) => expr.to_tokens(tokens),
             Expr::Include(expr) => expr.to_tokens(tokens),
@@ -284,7 +334,7 @@ impl Parse for Concat {
             name: input.parse()?,
             bang_token: input.parse()?,
             delimiter: macro_delimiter!(content in input),
-            args: content.call(Punctuated::parse_terminated)?,
+            args: Punctuated::parse_terminated_with(&content, Expr::parse_any)?,
         })
     }
 }
@@ -305,7 +355,7 @@ impl Parse for Env {
             name: input.parse()?,
             bang_token: input.parse()?,
             delimiter: macro_delimiter!(content in input),
-            arg: content.parse()?,
+            arg: Expr::parse_strict(&content).map(Box::new)?,
             trailing_comma: content.parse()?,
         })
     }
@@ -329,7 +379,7 @@ impl Parse for Include {
             name: input.parse()?,
             bang_token: input.parse()?,
             delimiter: macro_delimiter!(content in input),
-            arg: content.parse()?,
+            arg: Expr::parse_strict(&content).map(Box::new)?,
             trailing_comma: content.parse()?,
         })
     }
@@ -353,7 +403,7 @@ impl Parse for IncludeStr {
             name: input.parse()?,
             bang_token: input.parse()?,
             delimiter: macro_delimiter!(content in input),
-            arg: content.parse()?,
+            arg: Expr::parse_strict(&content).map(Box::new)?,
             trailing_comma: content.parse()?,
         })
     }
