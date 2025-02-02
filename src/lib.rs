@@ -15,6 +15,16 @@ mod kw {
     syn::custom_keyword!(stringify);
 }
 
+pub struct MacroString(pub String);
+
+impl Parse for MacroString {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let expr: Expr = input.parse()?;
+        let value = expr.eval()?;
+        Ok(MacroString(value))
+    }
+}
+
 enum Expr {
     Lit(LitStr),
     Concat(Concat),
