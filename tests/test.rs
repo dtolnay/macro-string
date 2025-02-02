@@ -8,3 +8,11 @@ fn test_concat_stringify() {
     };
     assert_eq!(value, "xy z");
 }
+
+#[test]
+fn test_env() {
+    let MacroString(value) = parse_quote! {
+        env!("CARGO_PKG_NAME")
+    };
+    assert_eq!(value, "macro-string");
+}
