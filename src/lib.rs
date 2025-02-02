@@ -50,6 +50,8 @@
 //! }
 //! ```
 
+#![doc(html_root_url = "https://docs.rs/macro-string/0.0.0")]
+
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use std::env;
