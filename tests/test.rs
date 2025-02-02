@@ -4,8 +4,34 @@ use syn::parse_quote;
 
 #[test]
 fn test_eval() {
-    const VALUE: &str = eval!(concat!("ru", "st"));
-    assert_eq!(VALUE, "rust");
+    macro_rules! test {
+        ($expr:expr) => {{
+            const EVAL: &str = eval!($expr);
+            const STD: &str = $expr;
+            assert_eq!(EVAL, STD);
+        }};
+    }
+
+    #[rustfmt::skip]
+    test!(concat!(
+        // Lit::Str
+        "rust",
+        // Lit::Char
+        ' ',
+        // Lit::Int
+        10,
+        -10,
+        0x10,
+        10u8,
+        10f32,
+        // Lit::Float
+        10.0,
+        10e1,
+        10.0f32,
+        // Lit::Bool
+        false,
+        true,
+    ));
 }
 
 #[test]
