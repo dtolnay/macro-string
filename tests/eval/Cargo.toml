@@ -1,0 +1,13 @@
+[package]
+name = "macro-string-eval"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+proc-macro = true
+
+[dependencies]
+macro-string = { path = "../.." }
+quote = "1"
+syn = { version = "2", default-features = false, features = ["parsing", "proc-macro"] }

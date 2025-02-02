@@ -1,5 +1,12 @@
 use macro_string::MacroString;
+use macro_string_eval::eval;
 use syn::parse_quote;
+
+#[test]
+fn test_eval() {
+    const VALUE: &str = eval!(concat!("ru", "st"));
+    assert_eq!(VALUE, "rust");
+}
 
 #[test]
 fn test_concat_stringify() {
