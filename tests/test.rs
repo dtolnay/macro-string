@@ -12,7 +12,26 @@ fn test_eval() {
         }};
     }
 
-    test!(concat!("ru", "st"));
+    #[rustfmt::skip]
+    test!(concat!(
+        // Lit::Str
+        "rust",
+        // Lit::Char
+        ' ',
+        // Lit::Int
+        10,
+        -10,
+        0x10,
+        10u8,
+        10f32,
+        // Lit::Float
+        10.0,
+        10e1,
+        10.0f32,
+        // Lit::Bool
+        false,
+        true,
+    ));
 }
 
 #[test]
