@@ -1,7 +1,8 @@
 [package]
 name = "macro-string-eval"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
+description = "Part of test suite for macro-string crate"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dtolnay/macro-string"
@@ -11,7 +12,7 @@ path = "eval.rs"
 proc-macro = true
 
 [dependencies]
-macro-string = { path = "../.." }
+macro-string = { path = "../..", version = "0" }
 quote = "1"
 syn = { version = "2", default-features = false, features = ["parsing", "proc-macro"] }
 

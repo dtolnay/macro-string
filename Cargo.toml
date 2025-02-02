@@ -1,6 +1,6 @@
 [package]
 name = "macro-string"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 categories = ["development-tools::procedural-macro-helpers"]
 description = "Eager evaluation of macros like `concat!` and `env!`"
@@ -16,7 +16,7 @@ quote = { version = "1", default-features = false }
 syn = { version = "2.0.98", default-features = false, features = ["parsing", "printing"] }
 
 [dev-dependencies]
-macro-string-eval = { path = "tests/eval" }
+macro-string-eval = { path = "tests/eval", version = "0" }
 rustversion = "1.0.19"
 serde_json = "1"
 syn = { version = "2", default-features = false, features = ["printing", "proc-macro"] }
