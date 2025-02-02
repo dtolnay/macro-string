@@ -54,6 +54,7 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use std::env;
 use std::fs;
+use std::path::Path;
 use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Result};
 use syn::punctuated::Punctuated;
 use syn::token::{Brace, Bracket, Paren};
@@ -106,23 +107,23 @@ impl Expr {
             }
             Expr::Include(expr) => {
                 let path = expr.arg.eval()?;
-                match fs::read_to_string(&path) {
-                    Ok(content) => {
-                        let inner: Expr = syn::parse_str(&content)?;
-                        inner.eval()
-                    }
-                    Err(err) => Err(Error::new_spanned(expr, err)),
-                }
+                let content = fs_read(&expr, &path)?;
+                let inner: Expr = syn::parse_str(&content)?;
+                inner.eval()
             }
             Expr::IncludeStr(expr) => {
                 let path = expr.arg.eval()?;
-                match fs::read_to_string(&path) {
-                    Ok(content) => Ok(content),
-                    Err(err) => Err(Error::new_spanned(expr, err)),
-                }
+                fs_read(&expr, &path)
             }
             Expr::Stringify(expr) => Ok(expr.tokens.to_string()),
         }
+    }
+}
+
+fn fs_read(span: &dyn ToTokens, path: impl AsRef<Path>) -> Result<String> {
+    match fs::read_to_string(path) {
+        Ok(content) => Ok(content),
+        Err(err) => Err(Error::new_spanned(span, err)),
     }
 }
 
