@@ -24,3 +24,11 @@ fn test_include_str() {
     };
     assert_eq!(value, "success\n");
 }
+
+#[test]
+fn test_include() {
+    let MacroString(value) = parse_quote! {
+        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/example.expr"))
+    };
+    assert_eq!(value, "123");
+}
