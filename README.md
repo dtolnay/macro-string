@@ -17,6 +17,7 @@ the two macro calls within its input tokens.
 ```rust
 use macro_string::MacroString;
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use std::fs;
 use syn::parse_macro_input;
 
