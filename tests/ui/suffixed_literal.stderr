@@ -1,0 +1,5 @@
+error: unexpected suffix on string literal
+ --> tests/ui/suffixed_literal.rs:3:31
+  |
+3 | const _: &str = eval!(concat!("ru"i32, "st"));
+  |                               ^^^^^^^
