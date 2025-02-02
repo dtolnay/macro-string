@@ -141,7 +141,10 @@ fn fs_read(span: &dyn ToTokens, path: impl AsRef<Path>) -> Result<String> {
     }
     match fs::read_to_string(path) {
         Ok(content) => Ok(content),
-        Err(err) => Err(Error::new_spanned(span, err)),
+        Err(err) => Err(Error::new_spanned(
+            span,
+            format!("{} {}", err, path.display()),
+        )),
     }
 }
 
