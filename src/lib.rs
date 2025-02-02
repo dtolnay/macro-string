@@ -121,6 +121,14 @@ impl Expr {
 }
 
 fn fs_read(span: &dyn ToTokens, path: impl AsRef<Path>) -> Result<String> {
+    let path = path.as_ref();
+    if path.is_relative() {
+        let name = span.to_token_stream().into_iter().next().unwrap();
+        return Err(Error::new_spanned(
+            span,
+            format!("a relative path is not supported here; use `{name}!(concat!(env!(\"CARGO_MANIFEST_DIR\"), ...))`"),
+        ));
+    }
     match fs::read_to_string(path) {
         Ok(content) => Ok(content),
         Err(err) => Err(Error::new_spanned(span, err)),
