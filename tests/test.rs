@@ -16,3 +16,11 @@ fn test_env() {
     };
     assert_eq!(value, "macro-string");
 }
+
+#[test]
+fn test_include_str() {
+    let MacroString(value) = parse_quote! {
+        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/example.str"))
+    };
+    assert_eq!(value, "success\n");
+}
