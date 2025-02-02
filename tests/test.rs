@@ -4,8 +4,15 @@ use syn::parse_quote;
 
 #[test]
 fn test_eval() {
-    const VALUE: &str = eval!(concat!("ru", "st"));
-    assert_eq!(VALUE, "rust");
+    macro_rules! test {
+        ($expr:expr) => {{
+            const EVAL: &str = eval!($expr);
+            const STD: &str = $expr;
+            assert_eq!(EVAL, STD);
+        }};
+    }
+
+    test!(concat!("ru", "st"));
 }
 
 #[test]
