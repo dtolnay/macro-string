@@ -51,13 +51,13 @@
 //! ```
 
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::env;
 use std::fs;
 use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Result};
 use syn::punctuated::Punctuated;
 use syn::token::{Brace, Bracket, Paren};
-use syn::{braced, bracketed, parenthesized, LitStr, Token};
+use syn::{braced, bracketed, parenthesized, Ident, LitStr, Token};
 
 mod kw {
     syn::custom_keyword!(concat);
@@ -192,6 +192,14 @@ impl Parse for Expr {
             input.parse().map(Expr::IncludeStr)
         } else if lookahead.peek(kw::stringify) {
             input.parse().map(Expr::Stringify)
+        } else if input.peek(Ident) && input.peek2(Token![!]) && input.peek3(Paren) {
+            let ident: Ident = input.parse()?;
+            let bang_token: Token![!] = input.parse()?;
+            let unsupported = quote!(#ident #bang_token);
+            Err(Error::new_spanned(
+                unsupported,
+                "unsupported macro, expected one of: `concat!`, `env!`, `include!`, `include_str!`, `stringify!`",
+            ))
         } else {
             Err(lookahead.error())
         }
