@@ -1,5 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens;
+use std::env;
+use std::fs;
 use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Result};
 use syn::punctuated::Punctuated;
 use syn::token::{Brace, Bracket, Paren};
@@ -20,6 +22,46 @@ enum Expr {
     Include(Include),
     IncludeStr(IncludeStr),
     Stringify(Stringify),
+}
+
+impl Expr {
+    fn eval(&self) -> Result<String> {
+        match self {
+            Expr::Lit(lit) => Ok(lit.value()),
+            Expr::Concat(expr) => {
+                let mut concat = String::new();
+                for arg in &expr.args {
+                    concat += &arg.eval()?;
+                }
+                Ok(concat)
+            }
+            Expr::Env(expr) => {
+                let key = expr.arg.eval()?;
+                match env::var(&key) {
+                    Ok(value) => Ok(value),
+                    Err(err) => Err(Error::new_spanned(expr, err)),
+                }
+            }
+            Expr::Include(expr) => {
+                let path = expr.arg.eval()?;
+                match fs::read_to_string(&path) {
+                    Ok(content) => {
+                        let inner: Expr = syn::parse_str(&content)?;
+                        inner.eval()
+                    }
+                    Err(err) => Err(Error::new_spanned(expr, err)),
+                }
+            }
+            Expr::IncludeStr(expr) => {
+                let path = expr.arg.eval()?;
+                match fs::read_to_string(&path) {
+                    Ok(content) => Ok(content),
+                    Err(err) => Err(Error::new_spanned(expr, err)),
+                }
+            }
+            Expr::Stringify(expr) => Ok(expr.tokens.to_string()),
+        }
+    }
 }
 
 struct Concat {
