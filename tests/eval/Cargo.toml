@@ -13,3 +13,6 @@ proc-macro = true
 macro-string = { path = "../.." }
 quote = "1"
 syn = { version = "2", default-features = false, features = ["parsing", "proc-macro"] }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
