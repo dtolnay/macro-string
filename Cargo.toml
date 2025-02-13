@@ -1,6 +1,6 @@
 [package]
 name = "macro-string"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 categories = ["development-tools::procedural-macro-helpers"]
 description = "Eager evaluation of macros like `concat!` and `env!`"

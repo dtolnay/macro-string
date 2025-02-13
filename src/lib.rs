@@ -67,7 +67,7 @@
 //! }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/macro-string/0.1.1")]
+#![doc(html_root_url = "https://docs.rs/macro-string/0.1.2")]
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
