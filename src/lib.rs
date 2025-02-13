@@ -10,6 +10,15 @@
 //! evaluation of standard library string macros like `concat!` and `env!` in
 //! macro input.
 //!
+//! <table><tr><td>
+//! <b>Supported macros:</b>
+//! <code>concat!</code>,
+//! <code>env!</code>,
+//! <code>include!</code>,
+//! <code>include_str!</code>,
+//! <code>stringify!</code>
+//! </td></tr></table>
+//!
 //! For example, to implement a macro such as the following:
 //!
 //! ```
