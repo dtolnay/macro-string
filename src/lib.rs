@@ -73,7 +73,7 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use std::env;
 use std::fs;
-use std::path::Path;
+use std::path::{Component, Path, PathBuf};
 use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Parser, Result};
 use syn::punctuated::Punctuated;
 use syn::token::{Brace, Bracket, Paren};
@@ -150,7 +150,7 @@ impl Expr {
 }
 
 fn fs_read(span: &dyn ToTokens, path: impl AsRef<Path>) -> Result<String> {
-    let path = path.as_ref();
+    let mut path = path.as_ref();
     if path.is_relative() {
         let name = span.to_token_stream().into_iter().next().unwrap();
         return Err(Error::new_spanned(
@@ -158,6 +158,17 @@ fn fs_read(span: &dyn ToTokens, path: impl AsRef<Path>) -> Result<String> {
             format!("a relative path is not supported here; use `{name}!(concat!(env!(\"CARGO_MANIFEST_DIR\"), ...))`"),
         ));
     }
+
+    // Make Windows verbatim paths work even with mixed path separators, which
+    // can happen when a path is produced using `concat!`.
+    let path_buf: PathBuf;
+    if let Some(Component::Prefix(prefix)) = path.components().next() {
+        if prefix.kind().is_verbatim() {
+            path_buf = path.components().collect();
+            path = &path_buf;
+        }
+    }
+
     match fs::read_to_string(path) {
         Ok(content) => Ok(content),
         Err(err) => Err(Error::new_spanned(
