@@ -65,3 +65,15 @@ fn test_include() {
     };
     assert_eq!(value, "123");
 }
+
+#[test]
+fn test_macro_lit() {
+    macro_rules! do_test_macro_lit {
+        ($str:expr) => {
+            eval!(concat!("//", $str))
+        };
+    }
+
+    let value = do_test_macro_lit!("...");
+    assert_eq!(value, "//...");
+}
