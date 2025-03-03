@@ -1,6 +1,6 @@
 [package]
 name = "macro-string-eval"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 description = "Part of test suite for macro-string crate"
 edition = "2021"
