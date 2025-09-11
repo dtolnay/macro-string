@@ -20,7 +20,7 @@ macro-string-eval = { path = "tests/eval", version = "0" }
 rustversion = "1.0.19"
 serde_json = "1"
 syn = { version = "2", default-features = false, features = ["printing", "proc-macro"] }
-trybuild = { version = "1.0.103", features = ["diff"] }
+trybuild = { version = "1.0.108", features = ["diff"] }
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
