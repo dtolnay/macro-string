@@ -8,7 +8,7 @@ documentation = "https://docs.rs/macro-string"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dtolnay/macro-string"
-rust-version = "1.68"
+rust-version = "1.71"
 
 [dependencies]
 proc-macro2 = { version = "1", default-features = false }
