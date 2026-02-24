@@ -36,34 +36,34 @@ fn test_eval() {
 
 #[test]
 fn test_concat_stringify() {
-    let MacroString(value) = parse_quote! {
+    let macro_string: MacroString = parse_quote! {
         concat!("x", stringify!(y z))
     };
-    assert_eq!(value, "xy z");
+    assert_eq!(macro_string.eval().unwrap(), "xy z");
 }
 
 #[test]
 fn test_env() {
-    let MacroString(value) = parse_quote! {
+    let macro_string: MacroString = parse_quote! {
         env!("CARGO_PKG_NAME")
     };
-    assert_eq!(value, "macro-string");
+    assert_eq!(macro_string.eval().unwrap(), "macro-string");
 }
 
 #[test]
 fn test_include_str() {
-    let MacroString(value) = parse_quote! {
+    let macro_string: MacroString = parse_quote! {
         include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/example.str"))
     };
-    assert_eq!(value, "success\n");
+    assert_eq!(macro_string.eval().unwrap(), "success\n");
 }
 
 #[test]
 fn test_include() {
-    let MacroString(value) = parse_quote! {
+    let macro_string: MacroString = parse_quote! {
         include!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/example.expr"))
     };
-    assert_eq!(value, "123");
+    assert_eq!(macro_string.eval().unwrap(), "123");
 }
 
 #[test]
