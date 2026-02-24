@@ -46,7 +46,11 @@
 //! #[proc_macro]
 //! # };
 //! pub fn include_json(input: TokenStream) -> TokenStream {
-//!     let MacroString(path) = parse_macro_input!(input);
+//!     let macro_string = parse_macro_input!(input as MacroString);
+//!     let path = match macro_string.eval() {
+//!         Ok(path) => path,
+//!         Err(err) => return TokenStream::from(err.to_compile_error()),
+//!     };
 //!
 //!     let content = match fs::read(&path) {
 //!         Ok(content) => content,
@@ -90,16 +94,33 @@ mod kw {
 }
 
 #[derive(Clone)]
-pub struct MacroString(pub String);
+pub struct MacroString {
+    expr: Expr,
+}
 
 impl Parse for MacroString {
     fn parse(input: ParseStream) -> Result<Self> {
-        let expr = input.call(Expr::parse_strict)?;
-        let value = expr.eval()?;
-        Ok(MacroString(value))
+        Ok(MacroString {
+            expr: input.call(Expr::parse_strict)?,
+        })
     }
 }
 
+impl MacroString {
+    /// Evaluate expression to string.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the expression was syntactically valid (parsed
+    /// successfully) but cannot be evaluated, for example because it refers to
+    /// an `env!` for which the environment variable is not set, or an
+    /// `include!` for which the file is not found.
+    pub fn eval(&self) -> Result<String> {
+        self.expr.eval()
+    }
+}
+
+#[derive(Clone)]
 enum Expr {
     LitStr(LitStr),
     LitChar(LitChar),
@@ -179,6 +200,7 @@ fn fs_read(span: &dyn ToTokens, path: impl AsRef<Path>) -> Result<String> {
     }
 }
 
+#[derive(Clone)]
 struct Concat {
     name: kw::concat,
     bang_token: Token![!],
@@ -186,6 +208,7 @@ struct Concat {
     args: Punctuated<Expr, Token![,]>,
 }
 
+#[derive(Clone)]
 struct Env {
     name: kw::env,
     bang_token: Token![!],
@@ -194,6 +217,7 @@ struct Env {
     trailing_comma: Option<Token![,]>,
 }
 
+#[derive(Clone)]
 struct Include {
     name: kw::include,
     bang_token: Token![!],
@@ -202,6 +226,7 @@ struct Include {
     trailing_comma: Option<Token![,]>,
 }
 
+#[derive(Clone)]
 struct IncludeStr {
     name: kw::include_str,
     bang_token: Token![!],
@@ -210,6 +235,7 @@ struct IncludeStr {
     trailing_comma: Option<Token![,]>,
 }
 
+#[derive(Clone)]
 struct Stringify {
     name: kw::stringify,
     bang_token: Token![!],
@@ -217,6 +243,7 @@ struct Stringify {
     tokens: TokenStream,
 }
 
+#[derive(Clone)]
 enum MacroDelimiter {
     Paren(Paren),
     Brace(Brace),

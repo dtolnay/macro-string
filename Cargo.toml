@@ -13,7 +13,7 @@ rust-version = "1.71"
 [dependencies]
 proc-macro2 = { version = "1", default-features = false }
 quote = { version = "1", default-features = false }
-syn = { version = "2.0.98", default-features = false, features = ["parsing", "printing"] }
+syn = { version = "2.0.98", default-features = false, features = ["clone-impls", "parsing", "printing"] }
 
 [dev-dependencies]
 macro-string-eval = { path = "tests/eval", version = "0" }

@@ -37,7 +37,11 @@ use syn::parse_macro_input;
 
 #[proc_macro]
 pub fn include_json(input: TokenStream) -> TokenStream {
-    let MacroString(path) = parse_macro_input!(input);
+    let macro_string = parse_macro_input!(input as MacroString);
+    let path = match macro_string.eval() {
+        Ok(path) => path,
+        Err(err) => return TokenStream::from(err.to_compile_error()),
+    };
 
     let content = match fs::read(&path) {
         Ok(content) => content,
