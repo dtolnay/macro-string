@@ -89,6 +89,7 @@ mod kw {
     syn::custom_keyword!(stringify);
 }
 
+#[derive(Clone)]
 pub struct MacroString(pub String);
 
 impl Parse for MacroString {
