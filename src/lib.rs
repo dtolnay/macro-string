@@ -38,7 +38,6 @@
 //! #
 //! use macro_string::MacroString;
 //! use proc_macro::TokenStream;
-//! use proc_macro2::Span;
 //! use std::fs;
 //! use syn::parse_macro_input;
 //!
@@ -54,16 +53,12 @@
 //!
 //!     let content = match fs::read(&path) {
 //!         Ok(content) => content,
-//!         Err(err) => {
-//!             return TokenStream::from(syn::Error::new(Span::call_site(), err).to_compile_error());
-//!         }
+//!         Err(err) => return TokenStream::from(macro_string.error(err).to_compile_error()),
 //!     };
 //!
 //!     let json: serde_json::Value = match serde_json::from_slice(&content) {
 //!         Ok(json) => json,
-//!         Err(err) => {
-//!             return TokenStream::from(syn::Error::new(Span::call_site(), err).to_compile_error());
-//!         }
+//!         Err(err) => return TokenStream::from(macro_string.error(err).to_compile_error()),
 //!     };
 //!
 //!     /*TODO: print serde_json::Value to TokenStream*/
@@ -76,6 +71,7 @@
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use std::env;
+use std::fmt::Display;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 use syn::parse::{Error, Parse, ParseBuffer, ParseStream, Parser, Result};
@@ -117,6 +113,26 @@ impl MacroString {
     /// `include!` for which the file is not found.
     pub fn eval(&self) -> Result<String> {
         self.expr.eval()
+    }
+
+    /// Construct a compile error with a Span encompassing the macro string's
+    /// original expression.
+    ///
+    /// ```compile_fail
+    /// my_macro! {
+    ///     resources = concat!(env!("CARGO_MANIFEST_DIR"), "/resources.json")
+    /// }
+    /// ```
+    ///
+    /// ```text
+    /// error: No such file or directory (os error 2) - /path/to/manifest-dir/resources.json
+    ///   --> example.rs:85:17
+    ///    |
+    /// 85 |     resources = concat!(env!("CARGO_MANIFEST_DIR"), "/resources.json")
+    ///    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    /// ```
+    pub fn error<T: Display>(&self, message: T) -> syn::Error {
+        syn::Error::new_spanned(&self.expr, message)
     }
 }
 
