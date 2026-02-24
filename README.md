@@ -31,7 +31,6 @@ the two macro calls within its input tokens.
 ```rust
 use macro_string::MacroString;
 use proc_macro::TokenStream;
-use proc_macro2::Span;
 use std::fs;
 use syn::parse_macro_input;
 
@@ -45,16 +44,12 @@ pub fn include_json(input: TokenStream) -> TokenStream {
 
     let content = match fs::read(&path) {
         Ok(content) => content,
-        Err(err) => {
-            return TokenStream::from(syn::Error::new(Span::call_site(), err).to_compile_error());
-        }
+        Err(err) => return TokenStream::from(macro_string.error(err).to_compile_error()),
     };
 
     let json: serde_json::Value = match serde_json::from_slice(&content) {
         Ok(json) => json,
-        Err(err) => {
-            return TokenStream::from(syn::Error::new(Span::call_site(), err).to_compile_error());
-        }
+        Err(err) => return TokenStream::from(macro_string.error(err).to_compile_error()),
     };
 
     /*TODO: print serde_json::Value to TokenStream*/
